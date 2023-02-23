@@ -12,7 +12,19 @@ use std::collections::HashMap;
 pub struct PaginationSetting {
     pub max_total_hits: usize,
 }
+#[derive(Serialize, Deserialize, Default, Debug, Clone, PartialEq, Eq, Copy)]
+#[serde(rename_all = "camelCase")]
+pub struct MinWordSizeForTypos {
+    pub one_typo: u8,
+    pub two_typos: u8,
+}
 
+#[derive(Serialize, Deserialize, Default, Debug, Clone, PartialEq, Eq, Copy)]
+#[serde(rename_all = "camelCase")]
+pub struct TypoToleranceSetting {
+    pub min_word_size_for_typos: MinWordSizeForTypos,
+    // ...
+}
 #[derive(Serialize, Deserialize, Default, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct FacetingSettings {
@@ -1345,6 +1357,46 @@ impl Index {
             ),
             &self.client.api_key,
             Method::Delete { query: () },
+            202,
+        )
+        .await
+    }
+
+    /// Update [typo tolerance](https://docs.meilisearch.com/learn/configuration/typo_tolerance.html#configuring-typo-tolerance) of the [Index].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use meilisearch_sdk::{client::*, indexes::*, settings::Settings};
+    /// #
+    /// # let MEILISEARCH_URL = option_env!("MEILISEARCH_URL").unwrap_or("http://localhost:7700");
+    /// # let MEILISEARCH_API_KEY = option_env!("MEILISEARCH_API_KEY").unwrap_or("masterKey");
+    /// #
+    /// # futures::executor::block_on(async move {
+    /// let client = Client::new(MEILISEARCH_URL, MEILISEARCH_API_KEY);
+    /// # client.create_index("update_typo_tolerance", None).await.unwrap().wait_for_completion(&client, None, None).await.unwrap();
+    /// let mut index = client.index("update_typo_tolerance");
+    ///
+    /// TODO: check example
+    /// let typo_tolerance = MinWordSizeForTypos { one_typos: 4, two_typos: 8 };
+    /// index.update_typo_tolerance(typo_tolerance).await.unwrap().wait_for_completion(&client, None, None).await.unwrap();
+    ///
+    /// TODO: add test
+    /// ```
+    pub async fn update_typo_tolerance(
+        &self,
+        min_word_size_for_typos: MinWordSizeForTypos,
+    ) -> Result<TaskInfo, Error> {
+        request::<(), MinWordSizeForTypos, TaskInfo>(
+            &format!(
+                "{}/indexes/{}/settings/typo-tolerance",
+                self.client.host, self.uid
+            ),
+            &self.client.api_key,
+            Method::Patch {
+                query: (),
+                body: min_word_size_for_typos,
+            },
             202,
         )
         .await
