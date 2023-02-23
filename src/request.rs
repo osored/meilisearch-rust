@@ -244,15 +244,15 @@ pub(crate) async fn stream_request<
         }
         Method::Post { query, body } => {
             let url = add_query_parameters(url, &query)?;
-            client.post(url).send_stream(body).await?
+            client.post(url).send_stream(AsyncBody::from_reader(body)).await?
         }
         Method::Patch { query, body } => {
             let url = add_query_parameters(url, &query)?;
-            client.patch(url).send_stream(body).await?
+            client.patch(url).send_stream(AsyncBody::from_reader(body)).await?
         }
         Method::Put { query, body } => {
             let url = add_query_parameters(url, &query)?;
-            client.put(url).send_stream(body).await?
+            client.put(url).send_stream(AsyncBody::from_reader(body)).await?
         }
     };
 
