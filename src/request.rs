@@ -367,7 +367,7 @@ pub(crate) async fn request<
 
     let status_code = response.status().as_u16();
     if status_code == expected_status_code {
-       response.json::<Output>().await.map_err(|e| {
+        response.json::<Output>().await.map_err(|e| {
             error!("Request succeeded but failed to parse response");
 
             match e {

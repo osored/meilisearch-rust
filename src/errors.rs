@@ -386,18 +386,17 @@ mod test {
 
         #[cfg(feature = "isahc-static-curl")]
         {
-                    let error = Error::HttpError(isahc::post("test_url", "test_body").unwrap_err());
-                    assert_eq!(
-                        error.to_string(),
-                        "HTTP request failed: failed to resolve host name"
-                    );
+            let error = Error::HttpError(isahc::post("test_url", "test_body").unwrap_err());
+            assert_eq!(
+                error.to_string(),
+                "HTTP request failed: failed to resolve host name"
+            );
         }
 
         #[cfg(feature = "awc")]
         {
-// TODO
+            // TODO
         }
-
 
         let error = Error::InvalidTenantToken(jsonwebtoken::errors::Error::from(InvalidToken));
         assert_eq!(
