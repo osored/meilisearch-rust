@@ -212,6 +212,78 @@ pub(crate) async fn stream_request<
     parse_response(status, expected_status_code, body)
 }
 
+#[cfg(feature = "awc")]
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) async fn stream_request<
+    'a,
+    Query: Serialize,
+    Body: futures_io::AsyncRead + Send + Sync + 'static,
+    Output: DeserializeOwned + 'static,
+>(
+    url: &str,
+    apikey: &str,
+    method: Method<Query, Body>,
+    content_type: &str,
+    expected_status_code: u16,
+) -> Result<Output, Error> {
+    use awc::{error::JsonPayloadError, Client};
+
+    let client = Client::builder()
+        .add_default_header(("User-Agent".to_string(), qualified_version()))
+        .bearer_auth(apikey)
+        .finish();
+
+    let mut response = match method {
+        Method::Get { query } => {
+            let url = add_query_parameters(url, &query)?;
+            client.get(url).send().await?
+        }
+        Method::Delete { query } => {
+            let url = add_query_parameters(url, &query)?;
+            client.delete(url).send().await?
+        }
+        Method::Post { query, body } => {
+            let url = add_query_parameters(url, &query)?;
+            client.post(url).send_stream(body).await?
+        }
+        Method::Patch { query, body } => {
+            let url = add_query_parameters(url, &query)?;
+            client.patch(url).send_stream(body).await?
+        }
+        Method::Put { query, body } => {
+            let url = add_query_parameters(url, &query)?;
+            client.put(url).send_stream(body).await?
+        }
+    };
+
+    let status_code = response.status().as_u16();
+    if status_code == expected_status_code {
+        response.json::<Output>().await.map_err(|e| {
+            error!("Request succeeded but failed to parse response");
+
+            match e {
+                JsonPayloadError::Deserialize(err) => Error::ParseError(err),
+                other => Error::ResponseParseError(other),
+            }
+        })
+    } else {
+        // TODO: create issue where it is clear what the HTTP error is
+        // ParseError(Error("invalid type: null, expected struct MeilisearchError", line: 1, column: 4))
+
+        warn!(
+            "Expected response code {}, got {}",
+            expected_status_code, status_code
+        );
+        match response.json::<MeilisearchError>().await {
+            Ok(e) => Err(Error::from(e)),
+            Err(e) => match e {
+                JsonPayloadError::Deserialize(err) => Err(Error::ParseError(err)),
+                other => Err(Error::ResponseParseError(other)),
+            },
+        }
+    }
+}
+
 #[cfg(target_arch = "wasm32")]
 pub fn add_query_parameters<Query: Serialize>(
     mut url: String,

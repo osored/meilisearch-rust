@@ -596,7 +596,6 @@ impl Index {
     /// # movie_index.delete().await.unwrap().wait_for_completion(&client, None, None).await.unwrap();
     /// # });
     /// ```
-    #[cfg(feature = "isahc-static-curl")] // AWC: TODO
     #[cfg(not(target_arch = "wasm32"))]
     pub async fn add_or_replace_unchecked_payload<
         T: futures_io::AsyncRead + Send + Sync + 'static,
@@ -753,7 +752,6 @@ impl Index {
     /// # movie_index.delete().await.unwrap().wait_for_completion(&client, None, None).await.unwrap();
     /// # });
     /// ```
-    #[cfg(feature = "isahc-static-curl")] // AWC: TODO
     #[cfg(not(target_arch = "wasm32"))]
     pub async fn add_or_update_unchecked_payload<
         T: futures_io::AsyncRead + Send + Sync + 'static,
