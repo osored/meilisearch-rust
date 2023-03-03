@@ -39,7 +39,7 @@ awc = {version = "3.1.0" }
 
 
 [features]
-default = ["awc/rustls"]
+default = ["awc"]
 # isahc-static-curl = ["isahc/static-curl"]
 awc = ["awc/rustls"]
 
